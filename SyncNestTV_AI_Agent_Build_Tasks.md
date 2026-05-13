@@ -32,7 +32,7 @@
 - [x] **T02: NestJS Initialization**
   - _Action:_ Set up basic NestJS structure in `apps/api`. Add global exception filters and validation pipes.
   - _Validation:_ `http://localhost:3001/api` returns a health check response.
-- [ ] **T03: Database & Prisma Setup**
+- [x] **T03: Database & Prisma Setup**
   - _Action:_ Create `docker-compose.yml` for Postgres and Redis. Set up Prisma schema with `User`, `Room`, `RoomMember`, and `RefreshToken`.
   - _Validation:_ Prisma migrations run successfully against the local Docker Postgres instance.
 

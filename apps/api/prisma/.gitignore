@@ -1,0 +1,4 @@
+# Prisma .gitignore
+.env
+.env.local
+.env.*.local

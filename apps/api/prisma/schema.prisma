@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// User model representing a registered user in the system
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String // hashed password using bcrypt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  rooms         RoomMember[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+/// Room model representing a streaming room session
+model Room {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  code          String    @unique // e.g., "mysterious-frog-1234"
+  codeExpiresAt DateTime? // Optional expiry for the invite code
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  members RoomMember[]
+
+  @@index([code])
+  @@map("rooms")
+}
+
+/// RoomMember model for room membership and roles
+model RoomMember {
+  id       String   @id @default(cuid())
+  userId   String
+  roomId   String
+  role     RoomRole @default(VIEWER) // Owner, Co-host, or Viewer
+  joinedAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@index([userId])
+  @@index([roomId])
+  @@map("room_members")
+}
+
+/// RefreshToken model for JWT refresh token management
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique // hashed refresh token
+  expiresAt DateTime // When this refresh token expires
+  revokedAt DateTime? // When this token was revoked (if ever)
+  createdAt DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// Enum for room member roles
+enum RoomRole {
+  OWNER
+  CO_HOST
+  VIEWER
+}

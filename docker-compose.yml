@@ -1,26 +1,47 @@
 version: '3.9'
 
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
+    container_name: syncnesttv-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: syncnesttv
+      POSTGRES_DB: syncnesttv_db
       POSTGRES_USER: syncnesttv
-      POSTGRES_PASSWORD: syncnesttv
+      POSTGRES_PASSWORD: syncnesttv_dev_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U syncnesttv']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # Redis Cache
   redis:
     image: redis:7-alpine
+    container_name: syncnesttv-redis
     restart: unless-stopped
+    command: redis-server --appendonly yes
     ports:
       - '6379:6379'
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
+    driver: local
+
+networks:
+  default:
+    name: syncnesttv-network
