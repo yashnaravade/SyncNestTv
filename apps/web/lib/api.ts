@@ -39,6 +39,12 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
   failedQueue = [];
 };
 
+function isPublicAuthRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname;
+  return path === '/login' || path === '/register';
+}
+
 // Request interceptor - add access token to requests
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -114,8 +120,8 @@ api.interceptors.response.use(
         Cookies.remove(ACCESS_TOKEN_COOKIE);
         Cookies.remove(REFRESH_TOKEN_COOKIE);
 
-        // Redirect to login or dispatch logout event
-        if (typeof window !== 'undefined') {
+        // Redirect to login only when not already on a public auth page (avoids infinite reload loop)
+        if (typeof window !== 'undefined' && !isPublicAuthRoute()) {
           window.location.href = '/login';
         }
 
