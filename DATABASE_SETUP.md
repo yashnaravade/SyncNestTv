@@ -27,7 +27,8 @@ docker compose up -d
 ```
 
 This will start:
-- PostgreSQL on `localhost:5432` (user: `syncnesttv`, password: `syncnesttv_dev_password`)
+
+- PostgreSQL on `localhost:5432` (user: `postgres`, password: `admin123`)
 - Redis on `localhost:6379`
 
 ### 2. Run Prisma Migrations
@@ -49,10 +50,10 @@ This generates TypeScript types based on your schema.
 
 ## Environment Variables
 
-The database connection is configured via `.env.local` in the root directory:
+The database connection is configured via `apps/api/prisma/.env` (or your own env file loaded by Prisma):
 
 ```env
-DATABASE_URL="postgresql://syncnesttv:syncnesttv_dev_password@localhost:5432/syncnesttv_db?schema=public"
+DATABASE_URL="postgresql://postgres:admin123@localhost:5432/syncnesttv_db?schema=public"
 REDIS_URL="redis://localhost:6379"
 ```
 

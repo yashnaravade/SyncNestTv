@@ -16,7 +16,7 @@ export class AppService {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      message: 'StreamTogether API is ready.',
+      message: 'SyncNest TV API is ready.',
       version: '0.1.0',
     };
   }

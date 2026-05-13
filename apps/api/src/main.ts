@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters';
 import { ValidationPipe } from './common/pipes';
@@ -7,6 +8,10 @@ import { ValidationPipe } from './common/pipes';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
+
+  app.setGlobalPrefix('api');
+
+  app.use(cookieParser());
 
   // Enable CORS
   app.enableCors({
@@ -23,7 +28,7 @@ async function bootstrap() {
   const port = process.env.PORT || 3001;
   await app.listen(port);
 
-  logger.log(`✅ StreamTogether API is running on http://localhost:${port}`);
+  logger.log(`✅ SyncNest TV API is running on http://localhost:${port}`);
   logger.log(`📊 Health check available at http://localhost:${port}/api`);
 }
 

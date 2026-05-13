@@ -38,10 +38,10 @@
 
 ### Phase 2: Core Backend - Auth & Rooms
 
-- [ ] **T04: Auth Module**
+- [x] **T04: Auth Module**
   - _Action:_ Implement `AuthModule` (JWT issuance, refresh token rotation via HttpOnly cookies, password hashing via bcrypt). Implement `POST /auth/register` and `POST /auth/login`.
   - _Validation:_ Successfully register a user, login, and refresh a token via Postman/cURL.
-- [ ] **T05: Rooms Module**
+- [x] **T05: Rooms Module**
   - _Action:_ Implement `RoomsModule` with CRUD operations. Add logic for assigning `RoomRole` (Owner, Co-host, Viewer).
   - _Validation:_ Create a room, fetch room details, and add a user to a room.
 - [ ] **T06: Room Invites System**
