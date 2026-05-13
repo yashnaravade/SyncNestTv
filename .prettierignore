@@ -1,0 +1,9 @@
+node_modules
+.pnp
+.pnpm
+.turbo
+dist
+.next
+coverage
+*.log
+.env*
