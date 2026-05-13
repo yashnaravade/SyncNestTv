@@ -30,9 +30,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await authApi.me();
       setUser(response.user);
     } catch {
-      // Not authenticated or token expired
-      setUser(null);
-      tokenUtils.clearTokens();
+      try {
+        const { accessToken } = await authApi.refresh();
+        tokenUtils.setTokens(accessToken);
+        const response = await authApi.me();
+        setUser(response.user);
+      } catch {
+        setUser(null);
+        tokenUtils.clearTokens();
+      }
     } finally {
       setIsLoading(false);
     }

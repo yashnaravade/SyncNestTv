@@ -9,6 +9,28 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const ACCESS_TOKEN_COOKIE = 'access_token';
 const REFRESH_TOKEN_COOKIE = 'refresh_token';
 
+function attachAccessToken(config: InternalAxiosRequestConfig) {
+  const token = Cookies.get(ACCESS_TOKEN_COOKIE);
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}
+
+/** Used for session bootstrap: no 401→refresh interceptor (avoids refresh storms on /auth/me). */
+const sessionApi = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+sessionApi.interceptors.request.use(
+  (config) => attachAccessToken(config),
+  (error) => Promise.reject(error),
+);
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -47,36 +69,33 @@ function isPublicAuthRoute(): boolean {
 
 // Request interceptor - add access token to requests
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = Cookies.get(ACCESS_TOKEN_COOKIE);
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
+  (config: InternalAxiosRequestConfig) => attachAccessToken(config),
   (error) => {
     return Promise.reject(error);
   }
 );
 
-// Response interceptor - handle token refresh on 401 errors
+// Response interceptor - handle 401 with a single refresh flight + queued retries
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // If error is not 401 or we've already retried, reject
     if (!error.response || error.response.status !== 401) {
       return Promise.reject(error);
     }
 
-    // If this is a refresh token request, reject
     if (originalRequest.url?.includes('/auth/refresh')) {
       return Promise.reject(error);
     }
 
-    // If already retrying, add to queue
+    // Already refreshed and retried this config — stop (prevents refresh loops)
     if (originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    if (isRefreshing) {
+      originalRequest._retry = true;
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       }).then((token) => {
@@ -85,57 +104,41 @@ api.interceptors.response.use(
       });
     }
 
-    // Mark as retrying
     originalRequest._retry = true;
+    isRefreshing = true;
 
-    // If not currently refreshing, start the refresh process
-    if (!isRefreshing) {
-      isRefreshing = true;
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/refresh`,
+        {},
+        { withCredentials: true },
+      );
 
-      try {
-        // Try to refresh the token
-        const response = await axios.post(
-          `${API_BASE_URL}/api/auth/refresh`,
-          {},
-          { withCredentials: true}
-        );
+      const { accessToken } = response.data;
 
-        const { accessToken } = response.data;
+      Cookies.set(ACCESS_TOKEN_COOKIE, accessToken, {
+        expires: 1 / 24,
+        sameSite: 'lax',
+      });
 
-        // Store the new access token
-        Cookies.set(ACCESS_TOKEN_COOKIE, accessToken, {
-          expires: 1 / 24, // 1 hour
-          sameSite: 'lax',
-        });
+      processQueue(null, accessToken);
 
-        // Process the queue with the new token
-        processQueue(null, accessToken);
+      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+      return api(originalRequest);
+    } catch (refreshError) {
+      processQueue(refreshError as AxiosError, null);
+      Cookies.remove(ACCESS_TOKEN_COOKIE);
+      Cookies.remove(REFRESH_TOKEN_COOKIE);
 
-        // Retry the original request
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed - clear tokens and reject all queued requests
-        processQueue(refreshError as AxiosError, null);
-        Cookies.remove(ACCESS_TOKEN_COOKIE);
-        Cookies.remove(REFRESH_TOKEN_COOKIE);
-
-        // Redirect to login only when not already on a public auth page (avoids infinite reload loop)
-        if (typeof window !== 'undefined' && !isPublicAuthRoute()) {
-          window.location.href = '/login';
-        }
-
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
+      if (typeof window !== 'undefined' && !isPublicAuthRoute()) {
+        window.location.href = '/login';
       }
-    }
 
-    // Add to queue if already refreshing
-    return new Promise((resolve, reject) => {
-      failedQueue.push({ resolve, reject });
-    });
-  }
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
+  },
 );
 
 // Rooms API
@@ -206,15 +209,19 @@ export const authApi = {
    * Get current user profile
    */
   me: async () => {
-    const response = await api.get('/api/auth/me');
+    const response = await sessionApi.get('/api/auth/me');
     return response.data;
   },
 
   /**
-   * Refresh access token
+   * Refresh access token (must not use `api` client — avoids nested 401 interceptor behavior)
    */
   refresh: async () => {
-    const response = await api.post('/api/auth/refresh');
+    const response = await axios.post(
+      `${API_BASE_URL}/api/auth/refresh`,
+      {},
+      { withCredentials: true },
+    );
     return response.data;
   },
 };

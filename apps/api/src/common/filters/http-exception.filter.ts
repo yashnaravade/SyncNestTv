@@ -39,7 +39,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request.url,
     };
 
-    this.logger.error(`${request.method} ${request.url}`, JSON.stringify(errorResponse));
+    const path = typeof request.url === 'string' ? request.url : request.path || '';
+    const isExpectedUnauthenticated =
+      status === HttpStatus.UNAUTHORIZED &&
+      (path.includes('/api/auth/me') || path.includes('/api/auth/refresh'));
+
+    if (isExpectedUnauthenticated) {
+      this.logger.log(`HTTP ${status} ${request.method} ${path} (unauthenticated session)`);
+    } else {
+      this.logger.error(`${request.method} ${request.url}`, JSON.stringify(errorResponse));
+    }
 
     response.status(status).json(errorResponse);
   }
