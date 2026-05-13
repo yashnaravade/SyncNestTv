@@ -5,7 +5,7 @@
     "module": "ESNext",
     "types": ["node", "react", "react-dom"],
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true

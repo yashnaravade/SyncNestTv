@@ -144,3 +144,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Local Claude settings and service documentation
+.claude/
+social_streaming_platform_v2.md
