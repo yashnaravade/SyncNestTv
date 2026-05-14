@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AddRoomMemberDto } from './dto/add-room-member.dto';
@@ -33,6 +23,11 @@ export class RoomsController {
   @Get()
   list(@Req() req: Authed) {
     return this.rooms.listForUser(req.user.id);
+  }
+
+  @Get('code/:code')
+  getByCode(@Req() req: Authed, @Param('code') code: string) {
+    return this.rooms.findOneByCodeForUser(code, req.user.id);
   }
 
   @Get(':id')

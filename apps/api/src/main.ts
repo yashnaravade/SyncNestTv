@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters';
 import { ValidationPipe } from './common/pipes';
+import { RedisIoAdapter } from './sync/redis-io.adapter';
+import { SocketAuthService } from './sync/socket-auth.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,6 +26,9 @@ async function bootstrap() {
 
   // Apply global validation pipe
   app.useGlobalPipes(new ValidationPipe());
+
+  const socketAuthService = app.get(SocketAuthService);
+  app.useWebSocketAdapter(new RedisIoAdapter(app, socketAuthService));
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

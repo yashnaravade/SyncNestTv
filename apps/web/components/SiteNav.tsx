@@ -29,6 +29,9 @@ export function SiteNav() {
         <nav className="flex items-center gap-4 sm:gap-6">
           {isAuthenticated ? (
             <>
+              <Link href="/dashboard" className={cn(navLink)}>
+                Dashboard
+              </Link>
               <Link href="/rooms" className={cn(navLink)}>
                 Rooms
               </Link>

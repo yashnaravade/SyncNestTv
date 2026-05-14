@@ -62,10 +62,10 @@
 
 ### Phase 4: Frontend Foundations
 
-- [ ] **T10: Next.js UI Initialization**
+- [x] **T10: Next.js UI Initialization**
   - _Action:_ Set up Next.js app router. Install Tailwind, shadcn/ui base components, and Lucide icons. Set up standard layout wrappers.
   - _Validation:_ Blank landing page renders with correct styling/fonts.
-- [ ] **T11: Auth Pages & State**
+- [x] **T11: Auth Pages & State**
   - _Action:_ Create Zustand store for user auth. Build `/login` and `/register` pages. Build fetch interceptors to handle token refreshes automatically.
   - _Validation:_ Can log in via UI and session persists across reloads.
 - [ ] **T12: Room Management UI**

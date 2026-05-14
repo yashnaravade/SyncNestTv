@@ -82,6 +82,25 @@ export class RoomsService {
     return room;
   }
 
+  async findOneByCodeForUser(code: string, userId: string) {
+    const room = await this.prisma.room.findFirst({
+      where: {
+        code,
+        isActive: true,
+        members: { some: { userId } },
+      },
+      include: {
+        members: membersWithUser,
+      },
+    });
+
+    if (!room) {
+      throw new NotFoundException('Room not found');
+    }
+
+    return room;
+  }
+
   async update(roomId: string, actorId: string, dto: UpdateRoomDto) {
     await this.requireRole(roomId, actorId, [RoomRole.OWNER, RoomRole.CO_HOST]);
 

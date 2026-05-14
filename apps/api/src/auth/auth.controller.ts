@@ -11,10 +11,7 @@ export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Post('register')
-  async register(
-    @Body() dto: RegisterDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     return this.auth.register(dto, res);
   }
 
@@ -24,10 +21,7 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refresh(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const raw = req.cookies?.[REFRESH_COOKIE] as string | undefined;
     return this.auth.refresh(raw, res);
   }
@@ -36,7 +30,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async logout(
     @Req() req: Request & { user: { id: string } },
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: Response
   ) {
     const raw = req.cookies?.[REFRESH_COOKIE] as string | undefined;
     return this.auth.logout(req.user.id, raw, res);
@@ -44,7 +38,12 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@Req() req: Request & { user: { id: string; email: string; username: string; createdAt: Date; updatedAt: Date } }) {
+  me(
+    @Req()
+    req: Request & {
+      user: { id: string; email: string; username: string; createdAt: Date; updatedAt: Date };
+    }
+  ) {
     const u = req.user;
     return {
       user: {
@@ -55,5 +54,13 @@ export class AuthController {
         updatedAt: u.updatedAt instanceof Date ? u.updatedAt.toISOString() : u.updatedAt,
       },
     };
+  }
+
+  @Get('users')
+  @UseGuards(JwtAuthGuard)
+  async listUsers() {
+    // Temporary endpoint for debugging - remove in production
+    const users = await this.auth.listUsers();
+    return { users };
   }
 }

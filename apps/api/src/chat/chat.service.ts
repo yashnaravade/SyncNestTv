@@ -1,4 +1,10 @@
-import { Injectable, ForbiddenException, HttpException, HttpStatus, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import Redis from 'ioredis';
 import { Prisma, MessageType } from '@prisma/client';
@@ -18,8 +24,12 @@ export class ChatService implements OnModuleDestroy {
     roomId: string,
     content: string,
     type: MessageType = MessageType.TEXT,
-    metadata?: Prisma.InputJsonValue,
-  ): Promise<Prisma.MessageGetPayload<{ include: { user: { select: { id: true; username: true; email: true } } } }>> {
+    metadata?: Prisma.InputJsonValue
+  ): Promise<
+    Prisma.MessageGetPayload<{
+      include: { user: { select: { id: true; username: true; email: true } } };
+    }>
+  > {
     await this.ensureRoomMembership(userId, roomId);
     await this.enforceRateLimit(userId);
 

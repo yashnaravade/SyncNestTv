@@ -59,7 +59,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       dto.roomId,
       dto.content,
       dto.type,
-      dto.metadata as Prisma.InputJsonValue,
+      dto.metadata as Prisma.InputJsonValue
     );
 
     const payload = {

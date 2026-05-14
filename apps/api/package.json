@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
+    "dev": "nest start --watch",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "build": "nest build",
@@ -18,15 +19,21 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^11.1.20",
+    "@nestjs/platform-socket.io": "^11.1.20",
+    "@nestjs/websockets": "^11.1.20",
     "@prisma/client": "^5.7.1",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.7",
+    "ioredis": "^5.3.3",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.3",
+    "@socket.io/redis-adapter": "^7.2.0",
+    "unique-names-generator": "^4.7.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.21",
@@ -42,6 +49,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "prisma": "^5.7.18",
+    "socket.io-client": "^4.8.3",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3"
   }

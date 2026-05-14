@@ -130,7 +130,7 @@ export default function RoomsPage() {
                 {rooms.map((room) => (
                   <li key={room.id}>
                     <Link
-                      href={`/rooms/${room.id}`}
+                      href={`/rooms/${room.code}`}
                       className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/80 px-5 py-4 transition hover:border-violet-500/40 hover:bg-slate-900"
                     >
                       <div>

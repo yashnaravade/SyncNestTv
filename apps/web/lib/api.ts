@@ -1,11 +1,8 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+﻿import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import Cookies from 'js-cookie';
 import type { Room, RoomMember, RoomRole } from '@/types/room';
 
-// API base URL - can be configured via environment variable
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-// Cookie names
 const ACCESS_TOKEN_COOKIE = 'access_token';
 const REFRESH_TOKEN_COOKIE = 'refresh_token';
 
@@ -17,21 +14,6 @@ function attachAccessToken(config: InternalAxiosRequestConfig) {
   return config;
 }
 
-/** Used for session bootstrap: no 401→refresh interceptor (avoids refresh storms on /auth/me). */
-const sessionApi = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-sessionApi.interceptors.request.use(
-  (config) => attachAccessToken(config),
-  (error) => Promise.reject(error),
-);
-
-// Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -40,42 +22,42 @@ const api = axios.create({
   },
 });
 
-// Track if we're currently refreshing the token
+const sessionApi = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+api.interceptors.request.use(
+  (config) => attachAccessToken(config),
+  (error) => Promise.reject(error)
+);
+sessionApi.interceptors.request.use(
+  (config) => attachAccessToken(config),
+  (error) => Promise.reject(error)
+);
+
 let isRefreshing = false;
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (error: unknown) => void }> = [];
 
-// Queue of requests waiting for token refresh
-let failedQueue: Array<{
-  resolve: (value: unknown) => void;
-  reject: (reason?: unknown) => void;
-}> = [];
-
-// Process the queue after token refresh
 const processQueue = (error: AxiosError | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      prom.resolve(token!);
     }
   });
   failedQueue = [];
 };
 
-function isPublicAuthRoute(): boolean {
+const isPublicAuthRoute = (): boolean => {
   if (typeof window === 'undefined') return false;
-  const path = window.location.pathname;
-  return path === '/login' || path === '/register';
-}
+  return window.location.pathname === '/login' || window.location.pathname === '/register';
+};
 
-// Request interceptor - add access token to requests
-api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => attachAccessToken(config),
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor - handle 401 with a single refresh flight + queued retries
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -89,7 +71,6 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Already refreshed and retried this config — stop (prevents refresh loops)
     if (originalRequest._retry) {
       return Promise.reject(error);
     }
@@ -99,7 +80,9 @@ api.interceptors.response.use(
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       }).then((token) => {
-        originalRequest.headers.Authorization = `Bearer ${token}`;
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+        }
         return api(originalRequest);
       });
     }
@@ -111,11 +94,10 @@ api.interceptors.response.use(
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/refresh`,
         {},
-        { withCredentials: true },
+        { withCredentials: true }
       );
 
       const { accessToken } = response.data;
-
       Cookies.set(ACCESS_TOKEN_COOKIE, accessToken, {
         expires: 1 / 24,
         sameSite: 'lax',
@@ -123,7 +105,9 @@ api.interceptors.response.use(
 
       processQueue(null, accessToken);
 
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+      if (originalRequest.headers) {
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+      }
       return api(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError as AxiosError, null);
@@ -138,10 +122,42 @@ api.interceptors.response.use(
     } finally {
       isRefreshing = false;
     }
-  },
+  }
 );
 
-// Rooms API
+export const authApi = {
+  register: async (data: { email: string; username: string; password: string }) => {
+    const response = await api.post('/api/auth/register', data);
+    return response.data;
+  },
+
+  login: async (data: { email: string; password: string }) => {
+    const response = await api.post('/api/auth/login', data);
+    return response.data;
+  },
+
+  logout: async () => {
+    const response = await api.post('/api/auth/logout');
+    Cookies.remove(ACCESS_TOKEN_COOKIE);
+    Cookies.remove(REFRESH_TOKEN_COOKIE);
+    return response.data;
+  },
+
+  me: async () => {
+    const response = await sessionApi.get('/api/auth/me');
+    return response.data;
+  },
+
+  refresh: async () => {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/auth/refresh`,
+      {},
+      { withCredentials: true }
+    );
+    return response.data;
+  },
+};
+
 export const roomsApi = {
   list: async (): Promise<Room[]> => {
     const response = await api.get<Room[]>('/api/rooms');
@@ -153,6 +169,26 @@ export const roomsApi = {
     return response.data;
   },
 
+  getByCode: async (code: string): Promise<Room> => {
+    const response = await api.get<Room>(`/api/rooms/code/${code}`);
+    return response.data;
+  },
+
+  joinRoom: async (
+    inviteCode: string
+  ): Promise<{ room: Room; member: RoomMember; message: string }> => {
+    const response = await api.post<{ room: Room; member: RoomMember; message: string }>(
+      '/api/invites/join',
+      { inviteCode }
+    );
+    return response.data;
+  },
+
+  generateInvite: async (roomId: string): Promise<{ code: string }> => {
+    const response = await api.post<{ code: string }>(`/api/invites/${roomId}`, {});
+    return response.data;
+  },
+
   create: async (data: { name: string; description?: string }): Promise<Room> => {
     const response = await api.post<Room>('/api/rooms', data);
     return response.data;
@@ -160,7 +196,7 @@ export const roomsApi = {
 
   update: async (
     id: string,
-    data: { name?: string; description?: string; isActive?: boolean },
+    data: { name?: string; description?: string; isActive?: boolean }
   ): Promise<Room> => {
     const response = await api.patch<Room>(`/api/rooms/${id}`, data);
     return response.data;
@@ -177,77 +213,21 @@ export const roomsApi = {
   },
 };
 
-// Auth API
-export const authApi = {
-  /**
-   * Register a new user
-   */
-  register: async (data: { email: string; username: string; password: string }) => {
-    const response = await api.post('/api/auth/register', data);
-    return response.data;
-  },
-
-  /**
-   * Login user
-   */
-  login: async (data: { email: string; password: string }) => {
-    const response = await api.post('/api/auth/login', data);
-    return response.data;
-  },
-
-  /**
-   * Logout user
-   */
-  logout: async () => {
-    const response = await api.post('/api/auth/logout');
-    Cookies.remove(ACCESS_TOKEN_COOKIE);
-    Cookies.remove(REFRESH_TOKEN_COOKIE);
-    return response.data;
-  },
-
-  /**
-   * Get current user profile
-   */
-  me: async () => {
-    const response = await sessionApi.get('/api/auth/me');
-    return response.data;
-  },
-
-  /**
-   * Refresh access token (must not use `api` client — avoids nested 401 interceptor behavior)
-   */
-  refresh: async () => {
-    const response = await axios.post(
-      `${API_BASE_URL}/api/auth/refresh`,
-      {},
-      { withCredentials: true },
-    );
-    return response.data;
-  },
-};
-
-// Helper functions for token management
 export const tokenUtils = {
-  /**
-   * Set access and refresh tokens in cookies
-   */
-  setTokens: (accessToken: string) => {
+  setAccessToken: (accessToken: string) => {
     Cookies.set(ACCESS_TOKEN_COOKIE, accessToken, {
-      expires: 1 / 24, // 1 hour
+      expires: 1 / 24,
       sameSite: 'lax',
     });
   },
-
-  /**
-   * Get access token from cookie
-   */
-  getAccessToken: () => {
-    return Cookies.get(ACCESS_TOKEN_COOKIE);
+  setTokens: (accessToken: string) => {
+    Cookies.set(ACCESS_TOKEN_COOKIE, accessToken, {
+      expires: 1 / 24,
+      sameSite: 'lax',
+    });
   },
-
-  /**
-   * Remove all tokens
-   */
+  getAccessToken: () => Cookies.get(ACCESS_TOKEN_COOKIE),
+  clearAccessToken: () => Cookies.remove(ACCESS_TOKEN_COOKIE),
   clearTokens: () => {
     Cookies.remove(ACCESS_TOKEN_COOKIE);
     Cookies.remove(REFRESH_TOKEN_COOKIE);

@@ -10,7 +10,15 @@ import { PresenceModule } from './presence/presence.module';
 import { ChatModule } from './chat/chat.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, RoomsModule, InvitesModule, SyncModule, PresenceModule, ChatModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    RoomsModule,
+    InvitesModule,
+    SyncModule,
+    PresenceModule,
+    ChatModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

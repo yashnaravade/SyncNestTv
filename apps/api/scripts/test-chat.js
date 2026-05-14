@@ -41,7 +41,12 @@ function createClient(token, label) {
   });
 
   socket.on('chat:message', (message) => {
-    console.log(`[${label}] chat:message`, message.user.username, message.content, message.createdAt);
+    console.log(
+      `[${label}] chat:message`,
+      message.user.username,
+      message.content,
+      message.createdAt
+    );
   });
 
   socket.on('chat:typing:start', (payload) => {

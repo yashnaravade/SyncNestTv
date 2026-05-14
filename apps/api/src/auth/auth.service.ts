@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -40,7 +36,7 @@ export function refreshCookieOptions() {
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwt: JwtService,
+    private readonly jwt: JwtService
   ) {}
 
   private signAccess(userId: string, email: string) {
@@ -49,7 +45,7 @@ export class AuthService {
       {
         secret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret-change-me',
         expiresIn: ACCESS_EXPIRES,
-      },
+      }
     );
   }
 
@@ -108,11 +104,7 @@ export class AuthService {
       where: { token: tokenHash },
       include: { user: true },
     });
-    if (
-      !record ||
-      record.revokedAt ||
-      record.expiresAt.getTime() < Date.now()
-    ) {
+    if (!record || record.revokedAt || record.expiresAt.getTime() < Date.now()) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
@@ -179,5 +171,19 @@ export class AuthService {
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
+  }
+
+  async listUsers() {
+    // Temporary method for debugging - remove in production
+    const users = await this.prisma.user.findMany({
+      select: { id: true, email: true, username: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      createdAt: user.createdAt.toISOString(),
+    }));
   }
 }
