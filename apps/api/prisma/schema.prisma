@@ -22,6 +22,7 @@ model User {
   // Relations
   rooms         RoomMember[]
   refreshTokens RefreshToken[]
+  messages      Message[]
 
   @@map("users")
 }
@@ -39,6 +40,8 @@ model Room {
 
   // Relations
   members RoomMember[]
+  invites RoomInvite[]
+  messages Message[]
 
   @@index([code])
   @@map("rooms")
@@ -62,6 +65,29 @@ model RoomMember {
   @@map("room_members")
 }
 
+model Message {
+  id        String      @id @default(uuid())
+  roomId    String
+  room      Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  content   String
+  type      MessageType @default(TEXT)
+  metadata  Json?       // Reactions, reply refs, etc.
+  createdAt DateTime    @default(now())
+  editedAt  DateTime?
+
+  @@index([roomId, createdAt])
+  @@map("messages")
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  REACTION
+  MEDIA_SHARE
+}
+
 /// RefreshToken model for JWT refresh token management
 model RefreshToken {
   id        String    @id @default(cuid())
@@ -76,6 +102,23 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+/// RoomInvite model for room invite codes
+model RoomInvite {
+  id        String    @id @default(uuid())
+  roomId    String
+  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  code      String    @unique
+  createdBy String
+  maxUses   Int?
+  useCount  Int       @default(0)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([roomId])
+  @@index([code])
+  @@map("room_invites")
 }
 
 /// Enum for room member roles

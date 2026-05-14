@@ -44,19 +44,19 @@
 - [x] **T05: Rooms Module**
   - _Action:_ Implement `RoomsModule` with CRUD operations. Add logic for assigning `RoomRole` (Owner, Co-host, Viewer).
   - _Validation:_ Create a room, fetch room details, and add a user to a room.
-- [ ] **T06: Room Invites System**
+- [x] **T06: Room Invites System**
   - _Action:_ Generate unique, human-readable room codes (`adjective-noun-4digits`). Implement invite validation and expiry logic.
   - _Validation:_ Join a room using a generated code.
 
 ### Phase 3: Real-Time Infrastructure (Socket.IO)
 
-- [ ] **T07: Socket.IO Gateway Setup**
+- [x] **T07: Socket.IO Gateway Setup**
   - _Action:_ Integrate Socket.IO into NestJS. Configure the Redis adapter (`ioredis`) for multi-instance scaling. Add JWT authentication middleware to sockets.
   - _Validation:_ Client can connect to `/sync` namespace and authenticate.
-- [ ] **T08: Presence Module**
+- [x] **T08: Presence Module**
   - _Action:_ Track online/offline status using Redis. Emit `presence:join` and `presence:leave` events.
   - _Validation:_ Connect 2 socket clients; both receive correct presence updates.
-- [ ] **T09: Chat Module**
+- [x] **T09: Chat Module**
   - _Action:_ Implement `/chat` namespace. Handle `chat:message` events, persist to Postgres, and emit back to room. Add typing indicators.
   - _Validation:_ Real-time text chat works between two connected clients.
 
