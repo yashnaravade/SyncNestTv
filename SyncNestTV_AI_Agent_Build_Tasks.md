@@ -77,10 +77,10 @@
 - [x] **T13: Jellyfin Config UI**
   - _Action:_ Build settings page for user to input Jellyfin Server URL, API Key, and User ID.
   - _Validation:_ Credentials save successfully to backend database.
-- [ ] **T14: Jellyfin Module (Backend Proxy)**
+- [x] **T14: Jellyfin Module (Backend Proxy)**
   - _Action:_ Build NestJS `JellyfinModule`. Implement AES-256 encryption/decryption for API keys.
   - _Validation:_ Keys are stored encrypted in the DB and decrypted in memory during requests.
-- [ ] **T15: Media Proxy Endpoints**
+- [x] **T15: Media Proxy Endpoints**
   - _Action:_ Implement `GET /api/media/library` (proxies Jellyfin `/Items`) and `GET /api/media/:id`.
   - _Validation:_ Frontend can fetch and display a grid of movies/shows from the connected Jellyfin server.
 - [ ] **T16: Stream URL Generation**

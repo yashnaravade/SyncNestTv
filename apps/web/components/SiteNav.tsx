@@ -35,6 +35,9 @@ export function SiteNav() {
               <Link href="/rooms" className={cn(navLink)}>
                 Rooms
               </Link>
+              <Link href="/media" className={cn(navLink)}>
+                Media
+              </Link>
               <Link href="/settings" className={cn(navLink)}>
                 Settings
               </Link>

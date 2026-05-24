@@ -106,13 +106,14 @@ model RefreshToken {
 }
 
 model JellyfinConfig {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  serverUrl     String
-  apiKey        String
-  jellyfinUserId String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  serverUrl        String
+  apiKey           String?
+  encryptedApiKey  String?
+  jellyfinUserId   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

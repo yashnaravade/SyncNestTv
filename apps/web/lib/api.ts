@@ -160,18 +160,27 @@ export const authApi = {
 
 export const jellyfinApi = {
   getConfig: async () => {
-    const response = await api.get<{ config: { serverUrl: string; jellyfinUserId: string } | null }>(
-      '/api/jellyfin/config'
-    );
+    const response = await api.get<{
+      config: { serverUrl: string; jellyfinUserId: string } | null;
+    }>('/api/jellyfin/config');
     return response.data;
   },
 
-  connect: async (data: {
-    serverUrl: string;
-    apiKey: string;
-    jellyfinUserId: string;
-  }) => {
+  connect: async (data: { serverUrl: string; apiKey: string; jellyfinUserId: string }) => {
     const response = await api.post('/api/jellyfin/connect', data);
+    return response.data;
+  },
+
+  getLibrary: async (params?: Record<string, string | number | boolean>) => {
+    const response = await api.get('/api/media/library', { params });
+    return response.data;
+  },
+
+  getMediaItem: async (
+    id: string,
+    params?: Record<string, string | number | boolean>
+  ) => {
+    const response = await api.get(`/api/media/${id}`, { params });
     return response.data;
   },
 };
