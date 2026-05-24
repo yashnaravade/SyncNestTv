@@ -35,6 +35,9 @@ export function SiteNav() {
               <Link href="/rooms" className={cn(navLink)}>
                 Rooms
               </Link>
+              <Link href="/settings" className={cn(navLink)}>
+                Settings
+              </Link>
               <span className="hidden max-w-[140px] truncate text-xs text-slate-500 sm:inline" title={user?.email}>
                 {user?.username}
               </span>

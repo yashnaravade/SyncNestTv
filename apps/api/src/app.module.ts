@@ -8,6 +8,7 @@ import { InvitesModule } from './invites/invites.module';
 import { SyncModule } from './sync/sync.module';
 import { PresenceModule } from './presence/presence.module';
 import { ChatModule } from './chat/chat.module';
+import { JellyfinModule } from './jellyfin/jellyfin.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ChatModule } from './chat/chat.module';
     SyncModule,
     PresenceModule,
     ChatModule,
+    JellyfinModule,
   ],
   controllers: [AppController],
   providers: [AppService],

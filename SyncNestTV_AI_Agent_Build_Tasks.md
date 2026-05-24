@@ -68,13 +68,13 @@
 - [x] **T11: Auth Pages & State**
   - _Action:_ Create Zustand store for user auth. Build `/login` and `/register` pages. Build fetch interceptors to handle token refreshes automatically.
   - _Validation:_ Can log in via UI and session persists across reloads.
-- [ ] **T12: Room Management UI**
+- [x] **T12: Room Management UI**
   - _Action:_ Build dashboard to list active rooms. Create "Create Room" modal and `/rooms/[code]` lobby view.
   - _Validation:_ User can create a room from the UI and be redirected to the lobby.
 
 ### Phase 5: Jellyfin Integration
 
-- [ ] **T13: Jellyfin Config UI**
+- [x] **T13: Jellyfin Config UI**
   - _Action:_ Build settings page for user to input Jellyfin Server URL, API Key, and User ID.
   - _Validation:_ Credentials save successfully to backend database.
 - [ ] **T14: Jellyfin Module (Backend Proxy)**

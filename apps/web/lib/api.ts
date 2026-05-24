@@ -158,6 +158,24 @@ export const authApi = {
   },
 };
 
+export const jellyfinApi = {
+  getConfig: async () => {
+    const response = await api.get<{ config: { serverUrl: string; jellyfinUserId: string } | null }>(
+      '/api/jellyfin/config'
+    );
+    return response.data;
+  },
+
+  connect: async (data: {
+    serverUrl: string;
+    apiKey: string;
+    jellyfinUserId: string;
+  }) => {
+    const response = await api.post('/api/jellyfin/connect', data);
+    return response.data;
+  },
+};
+
 export const roomsApi = {
   list: async (): Promise<Room[]> => {
     const response = await api.get<Room[]>('/api/rooms');

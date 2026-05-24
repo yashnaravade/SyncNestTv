@@ -23,6 +23,7 @@ model User {
   rooms         RoomMember[]
   refreshTokens RefreshToken[]
   messages      Message[]
+  jellyfinConfig JellyfinConfig?
 
   @@map("users")
 }
@@ -102,6 +103,20 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+model JellyfinConfig {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  serverUrl     String
+  apiKey        String
+  jellyfinUserId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("jellyfin_configs")
 }
 
 /// RoomInvite model for room invite codes

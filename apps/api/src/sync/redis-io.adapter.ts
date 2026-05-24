@@ -24,18 +24,59 @@ export class RedisIoAdapter extends IoAdapter {
     });
 
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    const pubClient = new Redis(redisUrl);
-    const subClient = pubClient.duplicate();
-
-    pubClient.on('error', (error: unknown) => {
-      console.error('Redis pub client error:', error);
+    const pubClient = new Redis(redisUrl, {
+      lazyConnect: true,
+      enableOfflineQueue: false,
+      retryStrategy: () => null,
+    });
+    const subClient = pubClient.duplicate({
+      lazyConnect: true,
+      enableOfflineQueue: false,
+      retryStrategy: () => null,
     });
 
-    subClient.on('error', (error: unknown) => {
-      console.error('Redis sub client error:', error);
-    });
+    const attachRedisErrorHandlers = (client: Redis, label: string) => {
+      client.on('error', (error: unknown) => {
+        console.warn(`${label} Redis client error:`, error);
+      });
 
-    server.adapter(createAdapter(pubClient, subClient));
+      client.on('connect', () => {
+        console.log(`${label} Redis client connected`);
+      });
+
+      client.on('end', () => {
+        console.log(`${label} Redis client disconnected`);
+      });
+    };
+
+    attachRedisErrorHandlers(pubClient, 'Pub');
+    attachRedisErrorHandlers(subClient, 'Sub');
+
+    const setRedisAdapter = async () => {
+      try {
+        await pubClient.connect();
+        await subClient.connect();
+        server.adapter(createAdapter(pubClient, subClient));
+        console.log('✅ Redis adapter connected for Socket.IO');
+      } catch (error) {
+        console.warn(
+          '⚠️ Redis adapter is unavailable. Starting Socket.IO without Redis clustering.',
+          error
+        );
+        try {
+          if (pubClient.status !== 'end') {
+            await pubClient.disconnect();
+          }
+          if (subClient.status !== 'end') {
+            await subClient.disconnect();
+          }
+        } catch {
+          // ignore disconnect failures for lazy clients
+        }
+      }
+    };
+
+    void setRedisAdapter();
 
     server.use(async (socket: Socket, next: (err?: any) => void) => {
       try {
